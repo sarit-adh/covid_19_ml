@@ -1,0 +1,21 @@
+# Ignore data directory
+/data/
+
+#Ignore saved models
+/trained_models/
+
+# Ignore environment variable file
+.env
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Python bytecode files
+*.pyc
+__pycache__/
+
+# Ignore virtual environment directory
+venv/
+
+# Ignore Conda environment directory (if using conda)
+.conda/
