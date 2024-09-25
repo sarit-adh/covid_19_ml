@@ -13,7 +13,6 @@ def drop_high_missing_cols(df, threshold=0.5):
     pd.DataFrame: The DataFrame with columns dropped.
     """
     missing_ratio = df.isnull().mean()
-    print(missing_ratio)
     return df.loc[:, missing_ratio < threshold]
 
 
@@ -46,7 +45,7 @@ def clean_data(df):
     # Drop duplicate rows
     df.drop_duplicates(inplace=True)
     
-    df = drop_high_missing_cols(df, threshold=0.5)
+    df = drop_high_missing_cols(df, threshold=0.9)
     df = fill_missing_values(df, strategy='mean')
     return df
 
