@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+
+    
 
 def visualize_true_vs_predicted(y_test, y_pred, y_label):
 # Set up the figure for side-by-side plots
@@ -13,7 +17,7 @@ def visualize_true_vs_predicted(y_test, y_pred, y_label):
     plt.xlabel(f"Actual {y_label}")
     plt.ylabel(f"Predicted {y_label}")
 
-    # Second subplot: Residual plot
+    # Second subplot: Residual plot , To check for Heteroscedasticity  if the variance of errors in a model is variable across observations.
     residuals = y_test - y_pred
     plt.subplot(1, 2, 2)  # (1 row, 2 columns, second plot)
     plt.scatter(y_pred, residuals, alpha=0.7, color='g')
@@ -24,4 +28,10 @@ def visualize_true_vs_predicted(y_test, y_pred, y_label):
 
     # Adjust layout and display the plots
     plt.tight_layout()
+    plt.show()
+    
+def visualize_tree(model, columns, y_label):
+    plt.figure(figsize=(20,10))
+    plot_tree(model, filled=True, fontsize=6, feature_names=columns, rounded=True, precision=2)
+    plt.title(f"Decision Tree for output {y_label}")
     plt.show()
