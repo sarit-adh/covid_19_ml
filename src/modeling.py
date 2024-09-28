@@ -1,3 +1,4 @@
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import r2_score
 from sklearn.linear_model import Lasso, LinearRegression
 from sklearn.metrics import mean_squared_error
@@ -89,14 +90,19 @@ def run_linear_regression_with_feature_selection(X, y, y_label):
 
     # Calculate mean squared error on the test set
     mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
     print(f"Test Set Mean Squared Error: {mse}")
+    print(f"R-squared (R2 Score): {r2}")
+    print(f"sample prediction: True Label : {y_test[0]} , Predicted Label : {y_pred[0]}")
+    visualize_true_vs_predicted(y_test, y_pred, y_label)
     
     
 def run_decision_tree_regression(X, y, y_label):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Initialize the Decision Tree Regressor
-    decision_tree_model = DecisionTreeRegressor(max_depth=4, random_state=42)
+    decision_tree_model = DecisionTreeRegressor(max_depth=10, random_state=42)
 
     # Fit the model to the training data
     decision_tree_model.fit(X_train, y_train)
@@ -113,7 +119,31 @@ def run_decision_tree_regression(X, y, y_label):
     print(f"R-squared (R2 Score): {r2}")
     print(f"sample prediction: True Label : {y_test[0]} , Predicted Label : {y_pred[0]}")
 
-    visualize_tree(decision_tree_model, X.columns, y_label)
+    #visualize_tree(decision_tree_model, X.columns, y_label) # figure is legible only upto max depth 4
+    visualize_true_vs_predicted(y_test, y_pred, y_label)
+    
+def run_gradient_boosting_regression(X, y, y_label):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Initialize the Gradient Boosting Regressor
+    gradient_boosting_model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
+
+    # Fit the model to the training data
+    gradient_boosting_model.fit(X_train, y_train)
+
+    # Predicting on the test data
+    y_pred = gradient_boosting_model.predict(X_test)
+
+    # Evaluating the model
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    # Printing evaluation results
+    print(f"Mean Squared Error (MSE): {mse}")
+    print(f"R-squared (R2 Score): {r2}")
+    print(f"sample prediction: True Label : {y_test[0]} , Predicted Label : {y_pred[0]}")
+
+    visualize_true_vs_predicted(y_test, y_pred, y_label)
     
 # Test
 def main():
@@ -145,16 +175,21 @@ def main():
     run_linear_regression(X, y2, 'HEALTHCARE_COVERAGE')
     '''
     
-    '''
+    
     # Decision Tree Model for prediction of healthcare expenses
     run_decision_tree_regression(X, y1,'HEALTHCARE_EXPENSES')
     
     # Decision Tree Model for prediction of healthcare coverage
     run_decision_tree_regression(X, y2, 'HEALTHCARE_COVERAGE')
-    '''
     
+    
+    '''
     # Linear Regression Model with Feature Selection
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
+    '''
+    
+    # Linear Regression with gradient boosted regression
+    run_gradient_boosting_regression(X, y1, 'HEALTHCARE_EXPENSES')
     
     
 
