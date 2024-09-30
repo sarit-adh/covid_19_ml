@@ -1,9 +1,11 @@
+import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import r2_score
 from sklearn.linear_model import Lasso, LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn.tree import DecisionTreeRegressor
 from data_loader import DataLoader
 from feature_engineering import feature_engineering_patients
@@ -155,12 +157,12 @@ def main():
     print(df.columns)
     data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
     
-    '''
+    
     # check for linearity (assumption #1 of linear regression model)
     g = sns.pairplot(data, x_vars='AGE', y_vars=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'], height=5, aspect=3)
     plt.suptitle('Pairplot of AGE vs Healthcare Expenses and Coverage')
     plt.show()
-    '''
+    
 
 
     X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
@@ -175,22 +177,40 @@ def main():
     run_linear_regression(X, y2, 'HEALTHCARE_COVERAGE')
     '''
     
-    
+    '''
     # Decision Tree Model for prediction of healthcare expenses
     run_decision_tree_regression(X, y1,'HEALTHCARE_EXPENSES')
     
     # Decision Tree Model for prediction of healthcare coverage
     run_decision_tree_regression(X, y2, 'HEALTHCARE_COVERAGE')
-    
+    '''
     
     '''
     # Linear Regression Model with Feature Selection
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
     '''
     
+    '''
     # Linear Regression with gradient boosted regression
     run_gradient_boosting_regression(X, y1, 'HEALTHCARE_EXPENSES')
+    '''
     
+    
+    # Polynomial features
+    
+    continuous_features = ['AGE']  # Add more continuous variables if needed
+    discrete_features = [col for col in X.columns if col not in continuous_features]
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    X_continuous_poly = poly.fit_transform(data[continuous_features])
+    poly_feature_names = poly.get_feature_names_out(continuous_features)
+
+    df_continuous_poly = pd.DataFrame(X_continuous_poly, columns=poly_feature_names)
+    df_discrete = df[discrete_features].reset_index(drop=True)
+    X_poly = pd.concat([df_continuous_poly, df_discrete], axis=1)
+    
+    print(X_poly.columns)
+    
+    run_linear_regression(X_poly, y1,'HEALTHCARE_EXPENSES')
     
 
 
