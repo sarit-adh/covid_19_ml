@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.tree import DecisionTreeRegressor
 from data_loader import DataLoader
-from feature_engineering import feature_engineering_patients
+from feature_engineering import feature_engineering_conditions, feature_engineering_patients
 from preprocessing import clean_data
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -158,16 +158,19 @@ def main():
     data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
     
     
+    '''
     # check for linearity (assumption #1 of linear regression model)
     g = sns.pairplot(data, x_vars='AGE', y_vars=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'], height=5, aspect=3)
     plt.suptitle('Pairplot of AGE vs Healthcare Expenses and Coverage')
     plt.show()
+    '''
     
 
-
+    '''
     X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
     y1 = data['HEALTHCARE_EXPENSES']  
     y2 = data['HEALTHCARE_COVERAGE']
+    '''
     
     '''
     # Linear Regression Model for prediction of healthcare expenses
@@ -195,7 +198,7 @@ def main():
     run_gradient_boosting_regression(X, y1, 'HEALTHCARE_EXPENSES')
     '''
     
-    
+    '''
     # Polynomial features
     
     continuous_features = ['AGE']  # Add more continuous variables if needed
@@ -211,6 +214,29 @@ def main():
     print(X_poly.columns)
     
     run_linear_regression(X_poly, y1,'HEALTHCARE_EXPENSES')
+    '''
+    
+    conditions_df = data_loader.load_file('conditions.csv')
+    conditions_df = conditions_df[['PATIENT','DESCRIPTION']]
+    conditions_df = clean_data(conditions_df)
+    conditions_df = feature_engineering_conditions(conditions_df)
+    patients_df = df.drop(columns=['BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    combined_df = patients_df.merge(conditions_df, left_on="Id", right_on="PATIENT")
+    combined_df = combined_df.drop(columns=['Id', 'PATIENT'])
+    print(combined_df.columns)
+    
+    X = combined_df.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = combined_df['HEALTHCARE_EXPENSES']  
+    y2 = combined_df['HEALTHCARE_COVERAGE']
+    
+    #run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
+    
+    
+    
+    
+    
+    
+    
     
 
 

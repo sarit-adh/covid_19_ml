@@ -44,6 +44,13 @@ def feature_engineering_patients(df):
     
     return df
 
+def feature_engineering_conditions(df):
+    
+    categorical_cols = ['DESCRIPTION']
+    df = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
+    return df
+    
+
 #Test
 def main():
     data_loader = DataLoader("../data/")
