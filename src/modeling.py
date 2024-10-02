@@ -63,17 +63,17 @@ def run_linear_regression_with_feature_selection(X, y, y_label):
         # Using SelectKBest with different values of 'k' (number of features)
         {
             'feature_selection': [select_k_best],
-            'feature_selection__k': [5, 10, 15]  # Try different numbers of features
+            'feature_selection__k': [5, 10, 15, 20]  # Try different numbers of features
         },
         # Using Recursive Feature Elimination (RFE) with different numbers of features
         {
             'feature_selection': [rfe],
-            'feature_selection__n_features_to_select': [5, 10, 15]  # Different numbers of features
+            'feature_selection__n_features_to_select': [5, 10, 15, 20]  # Different numbers of features
         },
         # Using Lasso for feature selection with different alpha values
         {
             'feature_selection': [lasso],
-            'feature_selection__estimator__alpha': [0.01, 0.1, 0.5]  # Different values of alpha for Lasso
+            'feature_selection__estimator__alpha': [0.01, 0.1, 0.5]  # Different values of alpha for Lasso, regularization strength
         }
     ]
     
@@ -235,11 +235,22 @@ def main():
     y2 = combined_df['HEALTHCARE_COVERAGE']
     
     print(X)
-    print(y1[0])
+    print(max(y1))
     
-    #TODO fix feature engineering, multiple rows for same patient due to different conditions
-    run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
+    #run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
+    
+    '''
+    # Memory error (DEBUG!!)
+    # Creating interaction terms between features to address heteroscedasticity
+    poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
+    interaction_terms = poly.fit_transform(X)
+    interaction_df = pd.DataFrame(interaction_terms, columns=poly.get_feature_names_out(input_features=X.columns))
+    X = pd.concat([X, interaction_df], axis=1)
+    
+    run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
+    
+    '''
     
     
     
