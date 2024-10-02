@@ -35,7 +35,7 @@ def run_linear_regression(X, y, y_label):
     
     print(f"Mean Squared Error ({y_label}): {mse}") 
     print(f"R-squared (R2 Score): {r2}")
-    print(f"sample prediction: True Label : {y_test[0]} , Predicted Label : {y_pred[0]}")
+    print(f"sample prediction: True Label : {y_test.iloc[0]} , Predicted Label : {y_pred[0]}")
     visualize_true_vs_predicted(y_test, y_pred, y_label)
     
 def run_linear_regression_with_feature_selection(X, y, y_label):
@@ -96,7 +96,7 @@ def run_linear_regression_with_feature_selection(X, y, y_label):
     
     print(f"Test Set Mean Squared Error: {mse}")
     print(f"R-squared (R2 Score): {r2}")
-    print(f"sample prediction: True Label : {y_test[0]} , Predicted Label : {y_pred[0]}")
+    print(f"sample prediction: True Label : {y_test.iloc[0]} , Predicted Label : {y_pred[0]}")
     visualize_true_vs_predicted(y_test, y_pred, y_label)
     
     
@@ -119,7 +119,7 @@ def run_decision_tree_regression(X, y, y_label):
     # Printing evaluation results
     print(f"Mean Squared Error (MSE): {mse}")
     print(f"R-squared (R2 Score): {r2}")
-    print(f"sample prediction: True Label : {y_test[0]} , Predicted Label : {y_pred[0]}")
+    print(f"sample prediction: True Label : {y_test.iloc[0]} , Predicted Label : {y_pred[0]}")
 
     #visualize_tree(decision_tree_model, X.columns, y_label) # figure is legible only upto max depth 4
     visualize_true_vs_predicted(y_test, y_pred, y_label)
@@ -143,7 +143,7 @@ def run_gradient_boosting_regression(X, y, y_label):
     # Printing evaluation results
     print(f"Mean Squared Error (MSE): {mse}")
     print(f"R-squared (R2 Score): {r2}")
-    print(f"sample prediction: True Label : {y_test[0]} , Predicted Label : {y_pred[0]}")
+    print(f"sample prediction: True Label : {y_test.iloc[0]} , Predicted Label : {y_pred[0]}")
 
     visualize_true_vs_predicted(y_test, y_pred, y_label)
     
@@ -170,16 +170,18 @@ def main():
     X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
     y1 = data['HEALTHCARE_EXPENSES']  
     y2 = data['HEALTHCARE_COVERAGE']
-    '''
     
-    '''
+    print(X)
+    print(y1[0])
+    
+    
     # Linear Regression Model for prediction of healthcare expenses
     run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
     
     # Linear Regression Model for prediction of healthcare coverage
-    run_linear_regression(X, y2, 'HEALTHCARE_COVERAGE')
-    '''
+    # run_linear_regression(X, y2, 'HEALTHCARE_COVERAGE')
     
+    '''
     '''
     # Decision Tree Model for prediction of healthcare expenses
     run_decision_tree_regression(X, y1,'HEALTHCARE_EXPENSES')
@@ -216,10 +218,13 @@ def main():
     run_linear_regression(X_poly, y1,'HEALTHCARE_EXPENSES')
     '''
     
+    
     conditions_df = data_loader.load_file('conditions.csv')
     conditions_df = conditions_df[['PATIENT','DESCRIPTION']]
     conditions_df = clean_data(conditions_df)
     conditions_df = feature_engineering_conditions(conditions_df)
+    conditions_df = conditions_df.groupby('PATIENT').sum().reset_index()
+    print(conditions_df.columns)
     patients_df = df.drop(columns=['BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
     combined_df = patients_df.merge(conditions_df, left_on="Id", right_on="PATIENT")
     combined_df = combined_df.drop(columns=['Id', 'PATIENT'])
@@ -229,7 +234,13 @@ def main():
     y1 = combined_df['HEALTHCARE_EXPENSES']  
     y2 = combined_df['HEALTHCARE_COVERAGE']
     
-    #run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
+    print(X)
+    print(y1[0])
+    
+    #TODO fix feature engineering, multiple rows for same patient due to different conditions
+    run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
+    run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
+    
     
     
     
