@@ -147,8 +147,8 @@ def run_gradient_boosting_regression(X, y, y_label):
 
     visualize_true_vs_predicted(y_test, y_pred, y_label)
     
-# Test
-def main():
+
+def test_regression_patients_expenses():
     data_loader = DataLoader("../data/")
     df = data_loader.load_file('patients.csv')
     df = clean_data(df)
@@ -158,22 +158,15 @@ def main():
     data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
     
     
-    '''
     # check for linearity (assumption #1 of linear regression model)
     g = sns.pairplot(data, x_vars='AGE', y_vars=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'], height=5, aspect=3)
     plt.suptitle('Pairplot of AGE vs Healthcare Expenses and Coverage')
     plt.show()
-    '''
     
 
-    '''
     X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
     y1 = data['HEALTHCARE_EXPENSES']  
     y2 = data['HEALTHCARE_COVERAGE']
-    
-    print(X)
-    print(y1[0])
-    
     
     # Linear Regression Model for prediction of healthcare expenses
     run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
@@ -181,27 +174,69 @@ def main():
     # Linear Regression Model for prediction of healthcare coverage
     # run_linear_regression(X, y2, 'HEALTHCARE_COVERAGE')
     
-    '''
-    '''
+def test_dt_regression_patients_expenses():
+    data_loader = DataLoader("../data/")
+    df = data_loader.load_file('patients.csv')
+    df = clean_data(df)
+    df = feature_engineering_patients(df)
+    print(df.head())
+    print(df.columns)
+    data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    
+    X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = data['HEALTHCARE_EXPENSES']  
+    y2 = data['HEALTHCARE_COVERAGE']
+    
     # Decision Tree Model for prediction of healthcare expenses
     run_decision_tree_regression(X, y1,'HEALTHCARE_EXPENSES')
     
     # Decision Tree Model for prediction of healthcare coverage
     run_decision_tree_regression(X, y2, 'HEALTHCARE_COVERAGE')
-    '''
     
-    '''
+def test_fs_regression_patients_expenses():
+    data_loader = DataLoader("../data/")
+    df = data_loader.load_file('patients.csv')
+    df = clean_data(df)
+    df = feature_engineering_patients(df)
+    print(df.head())
+    print(df.columns)
+    data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    
+    X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = data['HEALTHCARE_EXPENSES']  
+    y2 = data['HEALTHCARE_COVERAGE']
+    
     # Linear Regression Model with Feature Selection
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
-    '''
     
-    '''
+def test_gb_regression_patients_expenses():
+    data_loader = DataLoader("../data/")
+    df = data_loader.load_file('patients.csv')
+    df = clean_data(df)
+    df = feature_engineering_patients(df)
+    print(df.head())
+    print(df.columns)
+    data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    
+    X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = data['HEALTHCARE_EXPENSES']  
+    y2 = data['HEALTHCARE_COVERAGE']
+    
     # Linear Regression with gradient boosted regression
     run_gradient_boosting_regression(X, y1, 'HEALTHCARE_EXPENSES')
-    '''
     
-    '''
-    # Polynomial features
+def test_pf_regression_patients_expenses():
+    data_loader = DataLoader("../data/")
+    df = data_loader.load_file('patients.csv')
+    df = clean_data(df)
+    df = feature_engineering_patients(df)
+    print(df.head())
+    print(df.columns)
+    data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    
+    X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = data['HEALTHCARE_EXPENSES']  
+    y2 = data['HEALTHCARE_COVERAGE']
     
     continuous_features = ['AGE']  # Add more continuous variables if needed
     discrete_features = [col for col in X.columns if col not in continuous_features]
@@ -216,8 +251,31 @@ def main():
     print(X_poly.columns)
     
     run_linear_regression(X_poly, y1,'HEALTHCARE_EXPENSES')
-    '''
     
+def test_regression_patients_conditions_expenses():
+    data_loader = DataLoader("../data/")
+    df = data_loader.load_file('patients.csv')
+    df = clean_data(df)
+    df = feature_engineering_patients(df)
+    print(df.head())
+    print(df.columns)
+    data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    
+    X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = data['HEALTHCARE_EXPENSES']  
+    y2 = data['HEALTHCARE_COVERAGE']
+    
+    continuous_features = ['AGE']  # Add more continuous variables if needed
+    discrete_features = [col for col in X.columns if col not in continuous_features]
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    X_continuous_poly = poly.fit_transform(data[continuous_features])
+    poly_feature_names = poly.get_feature_names_out(continuous_features)
+
+    df_continuous_poly = pd.DataFrame(X_continuous_poly, columns=poly_feature_names)
+    df_discrete = df[discrete_features].reset_index(drop=True)
+    X_poly = pd.concat([df_continuous_poly, df_discrete], axis=1)
+    
+    print(X_poly.columns)
     
     conditions_df = data_loader.load_file('conditions.csv')
     conditions_df = conditions_df[['PATIENT','DESCRIPTION']]
@@ -234,13 +292,51 @@ def main():
     y1 = combined_df['HEALTHCARE_EXPENSES']  
     y2 = combined_df['HEALTHCARE_COVERAGE']
     
-    print(X)
-    print(max(y1))
+
     
     #run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
     
-    '''
+def test_fs_regression_patients_conditions_expenses():
+    data_loader = DataLoader("../data/")
+    df = data_loader.load_file('patients.csv')
+    df = clean_data(df)
+    df = feature_engineering_patients(df)
+    print(df.head())
+    print(df.columns)
+    data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    
+    X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = data['HEALTHCARE_EXPENSES']  
+    y2 = data['HEALTHCARE_COVERAGE']
+    
+    continuous_features = ['AGE']  # Add more continuous variables if needed
+    discrete_features = [col for col in X.columns if col not in continuous_features]
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    X_continuous_poly = poly.fit_transform(data[continuous_features])
+    poly_feature_names = poly.get_feature_names_out(continuous_features)
+
+    df_continuous_poly = pd.DataFrame(X_continuous_poly, columns=poly_feature_names)
+    df_discrete = df[discrete_features].reset_index(drop=True)
+    X_poly = pd.concat([df_continuous_poly, df_discrete], axis=1)
+    
+    print(X_poly.columns)
+    
+    conditions_df = data_loader.load_file('conditions.csv')
+    conditions_df = conditions_df[['PATIENT','DESCRIPTION']]
+    conditions_df = clean_data(conditions_df)
+    conditions_df = feature_engineering_conditions(conditions_df)
+    conditions_df = conditions_df.groupby('PATIENT').sum().reset_index()
+    print(conditions_df.columns)
+    patients_df = df.drop(columns=['BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    combined_df = patients_df.merge(conditions_df, left_on="Id", right_on="PATIENT")
+    combined_df = combined_df.drop(columns=['Id', 'PATIENT'])
+    print(combined_df.columns)
+    
+    X = combined_df.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = combined_df['HEALTHCARE_EXPENSES']  
+    y2 = combined_df['HEALTHCARE_COVERAGE']
+    
     # Memory error (DEBUG!!)
     # Creating interaction terms between features to address heteroscedasticity
     poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
@@ -250,16 +346,20 @@ def main():
     
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
     
-    '''
-    
-    
-    
-    
-    
     
     
     
     
 
+# Test
+def main():
+    #test_regression_patients_expenses()
+    #test_dt_regression_patients_expenses()
+    #test_fs_regression_patients_expenses()
+    #test_gb_regression_patients_expenses()
+    #test_pf_regression_patients_expenses()
+    test_regression_patients_conditions_expenses()
+    #test_fs_regression_patients_conditions_expenses()
+    
 
 if __name__ == "__main__": main()
