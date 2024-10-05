@@ -12,7 +12,7 @@ from feature_engineering import feature_engineering_conditions, feature_engineer
 from preprocessing import clean_data
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.feature_selection import SelectFromModel, SelectKBest, f_regression, RFE
+from sklearn.feature_selection import SelectFromModel, SelectKBest, chi2, f_regression, RFE
 from visualization import visualize_tree, visualize_true_vs_predicted
 
 def run_linear_regression(X, y, y_label):
@@ -310,7 +310,7 @@ def test_fs_regression_patients_conditions_expenses():
     y1 = data['HEALTHCARE_EXPENSES']  
     y2 = data['HEALTHCARE_COVERAGE']
     
-    continuous_features = ['AGE']  # Add more continuous variables if needed
+    continuous_features = ['AGE'] 
     discrete_features = [col for col in X.columns if col not in continuous_features]
     poly = PolynomialFeatures(degree=2, include_bias=False)
     X_continuous_poly = poly.fit_transform(data[continuous_features])
@@ -333,16 +333,30 @@ def test_fs_regression_patients_conditions_expenses():
     combined_df = combined_df.drop(columns=['Id', 'PATIENT'])
     print(combined_df.columns)
     
+    
+    
     X = combined_df.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
     y1 = combined_df['HEALTHCARE_EXPENSES']  
     y2 = combined_df['HEALTHCARE_COVERAGE']
     
+    
+    
+    X_cat = X.drop(columns=["AGE"])
+    
+    print("###############")
+    for column in X_cat.columns:
+        print(column)
+        print(max(combined_df[[combined_df.column]]))
+    
+    selector = SelectKBest(score_func=chi2, k=5)  # Select the top 5 features
+    X_reduced = selector.fit_transform(X_cat, y1)
+    X_reduced = pd.concat([X_reduced, X["AGE"]], axis=1)
     # Memory error (DEBUG!!)
     # Creating interaction terms between features to address heteroscedasticity
     poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
-    interaction_terms = poly.fit_transform(X)
+    interaction_terms = poly.fit_transform(X_reduced)
     interaction_df = pd.DataFrame(interaction_terms, columns=poly.get_feature_names_out(input_features=X.columns))
-    X = pd.concat([X, interaction_df], axis=1)
+    X = pd.concat([X_reduced, interaction_df], axis=1)
     
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
     
@@ -358,8 +372,8 @@ def main():
     #test_fs_regression_patients_expenses()
     #test_gb_regression_patients_expenses()
     #test_pf_regression_patients_expenses()
-    test_regression_patients_conditions_expenses()
-    #test_fs_regression_patients_conditions_expenses()
+    #test_regression_patients_conditions_expenses()
+    test_fs_regression_patients_conditions_expenses()
     
 
 if __name__ == "__main__": main()
