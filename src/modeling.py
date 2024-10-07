@@ -12,8 +12,9 @@ from feature_engineering import feature_engineering_conditions, feature_engineer
 from preprocessing import clean_data
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.feature_selection import SelectFromModel, SelectKBest, chi2, f_regression, RFE
+from sklearn.feature_selection import SelectFromModel, SelectKBest, chi2, f_regression, RFE, mutual_info_regression
 from visualization import visualize_tree, visualize_true_vs_predicted
+from sklearn.linear_model import Ridge
 
 def run_linear_regression(X, y, y_label):
     
@@ -27,6 +28,30 @@ def run_linear_regression(X, y, y_label):
 
     # Make predictions on the test set
     y_pred = linear_regression_model.predict(X_test)
+    
+
+    # Evaluate the model
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    print(f"Mean Squared Error ({y_label}): {mse}") 
+    print(f"R-squared (R2 Score): {r2}")
+    print(f"sample prediction: True Label : {y_test.iloc[0]} , Predicted Label : {y_pred[0]}")
+    visualize_true_vs_predicted(y_test, y_pred, y_label)
+    
+
+def run_ridge_regression(X, y, y_label):
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Initialize the linear regression model
+    ridge_regression_model = Ridge()
+
+    # Train the model
+    ridge_regression_model.fit(X_train, y_train)
+
+    # Make predictions on the test set
+    y_pred = ridge_regression_model.predict(X_test)
     
 
     # Evaluate the model
@@ -297,7 +322,7 @@ def test_regression_patients_conditions_expenses():
     #run_linear_regression(X, y1,'HEALTHCARE_EXPENSES')
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
     
-def test_fs_regression_patients_conditions_expenses():
+def test_cat_fs_regression_patients_conditions_expenses():
     data_loader = DataLoader("../data/")
     df = data_loader.load_file('patients.csv')
     df = clean_data(df)
@@ -346,19 +371,97 @@ def test_fs_regression_patients_conditions_expenses():
     print("###############")
     for column in X_cat.columns:
         print(column)
-        print(max(combined_df[[combined_df.column]]))
+        print(max(combined_df[column]))
     
-    selector = SelectKBest(score_func=chi2, k=5)  # Select the top 5 features
+    selector = SelectKBest(score_func=mutual_info_regression, k=20)  # Select the top 5 features
     X_reduced = selector.fit_transform(X_cat, y1)
-    X_reduced = pd.concat([X_reduced, X["AGE"]], axis=1)
+    
+    
+    selected_features = X_cat.columns[selector.get_support()]
+    X_reduced_df = pd.DataFrame(X_reduced, columns=selected_features)
+    
+    X_reduced_c = pd.concat([X_reduced_df, X["AGE"]], axis=1)
+    
+    
     # Memory error (DEBUG!!)
     # Creating interaction terms between features to address heteroscedasticity
     poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
-    interaction_terms = poly.fit_transform(X_reduced)
-    interaction_df = pd.DataFrame(interaction_terms, columns=poly.get_feature_names_out(input_features=X.columns))
-    X = pd.concat([X_reduced, interaction_df], axis=1)
+    interaction_terms = poly.fit_transform(X_reduced_c)
+    interaction_df = pd.DataFrame(interaction_terms, columns=poly.get_feature_names_out(input_features=X_reduced_c.columns))
+    X = pd.concat([X_reduced_c, interaction_df], axis=1)
     
     run_linear_regression_with_feature_selection(X, y1, 'HEALTHCARE_EXPENSES')
+    #run_linear_regression(X, y1, 'HEALTHCARE_EXPENSES')
+    
+def test_ridge_regression_patients_conditions_expenses():
+    data_loader = DataLoader("../data/")
+    df = data_loader.load_file('patients.csv')
+    df = clean_data(df)
+    df = feature_engineering_patients(df)
+    print(df.head())
+    print(df.columns)
+    data = df.drop(columns=['Id', 'BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    
+    X = data.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = data['HEALTHCARE_EXPENSES']  
+    y2 = data['HEALTHCARE_COVERAGE']
+    
+    continuous_features = ['AGE'] 
+    discrete_features = [col for col in X.columns if col not in continuous_features]
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    X_continuous_poly = poly.fit_transform(data[continuous_features])
+    poly_feature_names = poly.get_feature_names_out(continuous_features)
+
+    df_continuous_poly = pd.DataFrame(X_continuous_poly, columns=poly_feature_names)
+    df_discrete = df[discrete_features].reset_index(drop=True)
+    X_poly = pd.concat([df_continuous_poly, df_discrete], axis=1)
+    
+    print(X_poly.columns)
+    
+    conditions_df = data_loader.load_file('conditions.csv')
+    conditions_df = conditions_df[['PATIENT','DESCRIPTION']]
+    conditions_df = clean_data(conditions_df)
+    conditions_df = feature_engineering_conditions(conditions_df)
+    conditions_df = conditions_df.groupby('PATIENT').sum().reset_index()
+    print(conditions_df.columns)
+    patients_df = df.drop(columns=['BIRTHPLACE', 'ADDRESS', 'CITY', 'ZIP', 'LAT', 'LON'])
+    combined_df = patients_df.merge(conditions_df, left_on="Id", right_on="PATIENT")
+    combined_df = combined_df.drop(columns=['Id', 'PATIENT'])
+    print(combined_df.columns)
+    
+    
+    
+    X = combined_df.drop(columns=['HEALTHCARE_EXPENSES', 'HEALTHCARE_COVERAGE'])  
+    y1 = combined_df['HEALTHCARE_EXPENSES']  
+    y2 = combined_df['HEALTHCARE_COVERAGE']
+    
+    
+    
+    X_cat = X.drop(columns=["AGE"])
+    
+    print("###############")
+    for column in X_cat.columns:
+        print(column)
+        print(max(combined_df[column]))
+    
+    selector = SelectKBest(score_func=mutual_info_regression, k=20)  # Select the top 5 features
+    X_reduced = selector.fit_transform(X_cat, y1)
+    
+    
+    selected_features = X_cat.columns[selector.get_support()]
+    X_reduced_df = pd.DataFrame(X_reduced, columns=selected_features)
+    
+    X_reduced_c = pd.concat([X_reduced_df, X["AGE"]], axis=1)
+    
+    
+    # Memory error (DEBUG!!)
+    # Creating interaction terms between features to address heteroscedasticity
+    poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
+    interaction_terms = poly.fit_transform(X_reduced_c)
+    interaction_df = pd.DataFrame(interaction_terms, columns=poly.get_feature_names_out(input_features=X_reduced_c.columns))
+    X = pd.concat([X_reduced_c, interaction_df], axis=1)
+    
+    run_ridge_regression(X, y1, 'HEALTHCARE_EXPENSES')
     
     
     
@@ -373,7 +476,8 @@ def main():
     #test_gb_regression_patients_expenses()
     #test_pf_regression_patients_expenses()
     #test_regression_patients_conditions_expenses()
-    test_fs_regression_patients_conditions_expenses()
+    test_cat_fs_regression_patients_conditions_expenses()
+    test_ridge_regression_patients_conditions_expenses()
     
 
 if __name__ == "__main__": main()
