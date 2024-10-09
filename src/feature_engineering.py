@@ -52,13 +52,42 @@ def feature_engineering_conditions(df):
 
 
 def feature_engineering_observations(df):
+    # Create the pivot table
     pivot_df = df.pivot_table(index='PATIENT', columns='DESCRIPTION', values='VALUE', aggfunc='first').reset_index()
-    # Select only the numeric columns
-    numeric_cols = pivot_df.select_dtypes(include=['float64', 'int64']).columns
+    
+    patient_ids = pivot_df['PATIENT']
 
-    # Fill missing values only in numeric columns with the mean
-    pivot_df[numeric_cols] = pivot_df[numeric_cols].fillna(pivot_df[numeric_cols].mean()) # Check this strategy
-    return pivot_df
+    # Convert all columns to numeric (coerce non-numeric to NaN)
+    for col in pivot_df.columns:
+        pivot_df[col] = pd.to_numeric(pivot_df[col], errors='coerce')
+
+    # Drop columns that contain only NaN values
+    pivot_df_cleaned = pivot_df.dropna(axis=1, how='all')
+
+    # Print data types after conversion and dropping columns
+    print("Data types after conversion and dropping all-NaN columns:")
+    print(pivot_df_cleaned.dtypes)
+
+    # Fill missing values with the mean for numeric columns
+    pivot_df_cleaned = pivot_df_cleaned.fillna(pivot_df_cleaned.mean())
+
+    # Select numeric columns for clustering
+    numeric_cols = pivot_df_cleaned.select_dtypes(include=['float64', 'int64']).columns
+
+    # Ensure there are numeric columns to scale
+    if len(numeric_cols) > 0:
+        # Apply the StandardScaler only on the numeric columns
+        scaler = StandardScaler()
+        vitals_scaled = scaler.fit_transform(pivot_df_cleaned[numeric_cols])
+    
+        # Display the scaled values for verification
+        print("Scaled data for clustering:")
+        print(vitals_scaled)
+    else:
+        print("No numeric columns available for clustering.")
+
+    # Return the scaled data suitable for clustering
+    return patient_ids, vitals_scaled
     
 
 #Test

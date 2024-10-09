@@ -471,27 +471,23 @@ def test_clustering_observations():
     data_loader = DataLoader("../data/")
     observations_df = data_loader.load_file('observations.csv')
 
-    # Perform any feature engineering needed
-    observations_df = feature_engineering_observations(observations_df)
-    print(observations_df.head())
+    # Perform any feature engineering needed, ensure the 'PATIENT' column is retained
+    patient_ids, vitals_scaled = feature_engineering_observations(observations_df)
 
-    # Keep the 'PATIENT' column while selecting only numeric columns
-    numeric_observations_df = observations_df.select_dtypes(include=['float64', 'int64']).copy()
-
-    # Add the 'PATIENT' column back if necessary
-    numeric_observations_df['PATIENT'] = observations_df['PATIENT']
-
-    # Drop 'PATIENT' before scaling
-    scaler = StandardScaler()
-    vitals_scaled = scaler.fit_transform(numeric_observations_df.drop('PATIENT', axis=1))
+    # Assuming 'PATIENT' is still in the original dataframe, preserve it
+    patients_info = pd.DataFrame(patient_ids)
 
     # Apply K-Means clustering
     kmeans = KMeans(n_clusters=3, random_state=42)
-    numeric_observations_df['Cluster'] = kmeans.fit_predict(vitals_scaled)
-
-    # Display the resulting DataFrame with clusters
-    print(numeric_observations_df[['PATIENT', 'Cluster']].head())
+    clusters = kmeans.fit_predict(vitals_scaled)
     
+    print("len clusters: ", len(clusters))
+    print("len vitals_scaled: ", len(vitals_scaled))
+
+    # Add the clusters back to the patients' information
+    patients_info['Cluster'] = clusters
+
+    print(patients_info)
     
     
     
