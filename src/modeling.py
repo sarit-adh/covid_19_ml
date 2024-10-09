@@ -1,4 +1,6 @@
 import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.discriminant_analysis import StandardScaler
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import r2_score
 from sklearn.linear_model import Lasso, LinearRegression
@@ -8,7 +10,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.tree import DecisionTreeRegressor
 from data_loader import DataLoader
-from feature_engineering import feature_engineering_conditions, feature_engineering_patients
+from feature_engineering import feature_engineering_conditions, feature_engineering_observations, feature_engineering_patients
 from preprocessing import clean_data
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -463,6 +465,35 @@ def test_ridge_regression_patients_conditions_expenses():
     
     run_ridge_regression(X, y1, 'HEALTHCARE_EXPENSES')
     
+
+def test_clustering_observations():
+    # Load and preprocess the data
+    data_loader = DataLoader("../data/")
+    observations_df = data_loader.load_file('observations.csv')
+
+    # Perform any feature engineering needed
+    observations_df = feature_engineering_observations(observations_df)
+    print(observations_df.head())
+
+    # Keep the 'PATIENT' column while selecting only numeric columns
+    numeric_observations_df = observations_df.select_dtypes(include=['float64', 'int64']).copy()
+
+    # Add the 'PATIENT' column back if necessary
+    numeric_observations_df['PATIENT'] = observations_df['PATIENT']
+
+    # Drop 'PATIENT' before scaling
+    scaler = StandardScaler()
+    vitals_scaled = scaler.fit_transform(numeric_observations_df.drop('PATIENT', axis=1))
+
+    # Apply K-Means clustering
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    numeric_observations_df['Cluster'] = kmeans.fit_predict(vitals_scaled)
+
+    # Display the resulting DataFrame with clusters
+    print(numeric_observations_df[['PATIENT', 'Cluster']].head())
+    
+    
+    
     
     
     
@@ -476,8 +507,9 @@ def main():
     #test_gb_regression_patients_expenses()
     #test_pf_regression_patients_expenses()
     #test_regression_patients_conditions_expenses()
-    test_cat_fs_regression_patients_conditions_expenses()
-    test_ridge_regression_patients_conditions_expenses()
+    #test_cat_fs_regression_patients_conditions_expenses()
+    #test_ridge_regression_patients_conditions_expenses()
+    test_clustering_observations()
     
 
 if __name__ == "__main__": main()

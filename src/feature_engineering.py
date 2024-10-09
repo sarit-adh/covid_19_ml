@@ -49,6 +49,16 @@ def feature_engineering_conditions(df):
     categorical_cols = ['DESCRIPTION']
     df = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
     return df
+
+
+def feature_engineering_observations(df):
+    pivot_df = df.pivot_table(index='PATIENT', columns='DESCRIPTION', values='VALUE', aggfunc='first').reset_index()
+    # Select only the numeric columns
+    numeric_cols = pivot_df.select_dtypes(include=['float64', 'int64']).columns
+
+    # Fill missing values only in numeric columns with the mean
+    pivot_df[numeric_cols] = pivot_df[numeric_cols].fillna(pivot_df[numeric_cols].mean()) # Check this strategy
+    return pivot_df
     
 
 #Test
