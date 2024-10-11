@@ -477,8 +477,47 @@ def test_clustering_observations():
     # Assuming 'PATIENT' is still in the original dataframe, preserve it
     patients_info = pd.DataFrame(patient_ids)
 
-    # Apply K-Means clustering
-    kmeans = KMeans(n_clusters=3, random_state=42)
+    def find_best_k(data, max_k=10):
+        inertia = []
+        silhouette_scores = []
+
+        for k in range(2, max_k+1):
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            kmeans.fit(data)
+
+            inertia.append(kmeans.inertia_)
+            silhouette_avg = silhouette_score(data, kmeans.labels_)
+            silhouette_scores.append(silhouette_avg)
+
+        # Plot the Elbow Method
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.plot(range(2, max_k+1), inertia, marker='o', linestyle='--')
+        plt.title('Elbow Method')
+        plt.xlabel('Number of clusters (k)')
+        plt.ylabel('Inertia (sum of squared distances)')
+
+        # Plot the Silhouette Score
+        plt.subplot(1, 2, 2)
+        plt.plot(range(2, max_k+1), silhouette_scores, marker='o', linestyle='--')
+        plt.title('Silhouette Score')
+        plt.xlabel('Number of clusters (k)')
+        plt.ylabel('Silhouette Score')
+
+        plt.tight_layout()
+        plt.show()
+
+        # Return the optimal number of clusters based on silhouette score
+        best_k = np.argmax(silhouette_scores) + 2  # Since k starts from 2
+        return best_k
+    
+    # Determine the best k using the methods
+    best_k = find_best_k(vitals_scaled, max_k=10)
+    print(f"Best number of clusters: {best_k}")
+    
+    # Step 2: Apply K-Means clustering with the best number of clusters
+    kmeans = KMeans(n_clusters=best_k, random_state=42)
     clusters = kmeans.fit_predict(vitals_scaled)
     
     print("len clusters: ", len(clusters))
@@ -489,7 +528,6 @@ def test_clustering_observations():
 
     print(patients_info)
 
-    # Visualize clusters using PCA
     pca = PCA(n_components=2)
     vitals_pca = pca.fit_transform(vitals_scaled)
 
