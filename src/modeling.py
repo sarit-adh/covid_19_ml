@@ -488,6 +488,26 @@ def test_clustering_observations():
     patients_info['Cluster'] = clusters
 
     print(patients_info)
+
+    # Visualize clusters using PCA
+    pca = PCA(n_components=2)
+    vitals_pca = pca.fit_transform(vitals_scaled)
+
+    patients_info['PCA1'] = vitals_pca[:, 0]
+    patients_info['PCA2'] = vitals_pca[:, 1]
+
+    # Plot the clusters
+    plt.figure(figsize=(10, 6))
+    scatter = plt.scatter(patients_info['PCA1'], patients_info['PCA2'], c=patients_info['Cluster'], cmap='viridis')
+
+    # Adding the legend
+    plt.legend(*scatter.legend_elements(), title="Clusters")
+    plt.title('K-Means Clustering of Patients (PCA Reduced)')
+    plt.xlabel('PCA1')
+    plt.ylabel('PCA2')
+    plt.show()
+
+
     
     
     
